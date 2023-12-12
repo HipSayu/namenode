@@ -139,7 +139,7 @@ const hanldeCheckRequest = async (req, res) => {
                         .then(console.log('Write Succesfully'));
 
             res.send({
-                    metaDatas: metaDatas,
+                    data: metaDatas,
                     NumberChunk: NumberChunk,
                     request : 'write'
             })

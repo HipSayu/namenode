@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <title>Upload</title>
+</head>
+<body>
+    <div style="display: flex;flex-direction: column;">
+        <h1>Write</h1>
+        <form id="form" enctype="multipart/form-data">
+            <label for="name">Name File</label>
+            <input type="text" name="name" id="" required>
+            <label for="description">description</label>
+            <input type="text" name="description" id="" required>
+            <label for="image">image</label>
+            <input type="file" id="image" onchange="handleFileUpload()">
+            <button>Submit</button>
+        </form>
+        <h1>Read</h1>
+        <form id="form_Read">
+            <label for="name">Name File</label>
+            <input type="text" name="name" id="" required>
+            <button>Read</button>
+        </form>
+        <button id="btn">Download image</button>
+        <img id="imageElement" src="" alt="">
+
+    </div>
+</body>
+
+<script >
+    let uploadFile 
+    let SizeFileUpload
+    let typeFile
+    let dataimage = ''
+
+  function SplitFile(file, numberChunk) {
+        const Files = [];
+        const sizeFile = file.length
+        const chunkSize = []
+        
+        if (sizeFile%numberChunk !==0 ){
+            var mod = sizeFile - sizeFile%numberChunk
+            for (let i =0; i < numberChunk ; i++){
+                chunkSize.push(i*mod/numberChunk)
+
+            }
+            chunkSize.push(numberChunk*mod/numberChunk + sizeFile%numberChunk)
+            // console.log(chunkSize)
+            for (let i = 1; i < chunkSize.length; i += 1) {
+                Files.push(file.slice(chunkSize[i-1], chunkSize[i-1] + chunkSize[i]));
+            }
+        }
+        else{
+            for (let i = 0; i < sizeFile; i += sizeFile/numberChunk) {
+                Files.push(file.slice(i, i + sizeFile/numberChunk));
+            }
+        }
+            // console.log(Files)
+        return Files;
+  }
+
+    function handleFileUpload() {
+        const fileInput = document.getElementById('image');
+        if (fileInput.files.length > 0) {
+            const uploadedFile = fileInput.files[0];
+            SizeFileUpload = uploadedFile.size
+            const fileReader = new FileReader();
+            fileReader.onload = function(event) {
+                uploadFile = event.target.result;
+            };
+            fileReader.readAsDataURL(uploadedFile);
+        } else {
+            console.error('No file selected.');
+        }
+    }
+    
+
+    let form = document.getElementById('form')
+    form.addEventListener('submit', async (e)=>{
+        e.preventDefault()
+        let formData = new FormData(form)   
+        formData.append("Request", "Write")
+        formData.append("sizeFile", SizeFileUpload)
+
+        let data =Object.fromEntries(formData)
+        
+        await axios.post('http://localhost:1611/clientRequest',data)
+            .then((res)=> {
+                // console.log(res)
+                // console.log('data', res.data)
+                let numberChunk = res.data.NumberChunk
+                let metaDatas = res.data.metaDatas
+                let Files = SplitFile(uploadFile, numberChunk)
+                // console.log('dataNode', metaDatas[0].DataNode )
+                // let test = {...metaDatas[0],request : 'write' }
+                // console.log('test', test)
+               
+                Promise.all([
+                    axios.post(metaDatas[0].DataNode, {...metaDatas[0],request : 'write' ,File: Files[0]}),
+                    axios.post(metaDatas[1].DataNode, {...metaDatas[1],request : 'write' ,File: Files[1]}),
+                    axios.post(metaDatas[2].DataNode, {...metaDatas[2],request : 'write' ,File: Files[2]})
+                ])
+                .then(res=>{console.log(res)  })
+                .catch((err) => console.log(err))
+
+
+
+                // Files.forEach((element, index) => {
+                //     datas.push({
+                //         name : element.nameFile,
+                //         index : element.indexFile,
+                //         desc : element.desc,
+                //         file : filesupload[index],
+                //         request : 'write'
+                //     })
+                // });
+                // Promise.all([
+                //     axios.post(Files[0].DataNode, datas[0]),
+                //     axios.post(Files[1].DataNode, datas[1]),
+                //     axios.post(Files[2].DataNode, datas[2])
+                // ])
+                // .then(res=>{console.log(res)  })
+                // .catch((err) => console.log(err))
+           
+            })  
+    })
+
+
+
+
+    let imageElement = document.getElementById('imageElement')
+    let form_Read = document.getElementById('form_Read')
+    form_Read.addEventListener('submit', async (e)=>{
+        e.preventDefault()
+        let formDataRead = new FormData(form_Read)   
+        formDataRead.append("Request", "read")
+        let data =Object.fromEntries(formDataRead)
+        await axios.post('http://localhost:1611/clientRequest', data)
+            .then((res) =>{
+                if(res.data == 'Not in DB'){
+                    console.log('No co file')
+                }
+                else{
+                    var metadata = res.data.metadata
+                    let dataRead = {
+                        name :metadata[0].nameFile,
+
+
+
+                        request:'read'
+                    }
+                    Promise.all([
+                            axios.post(metadata[0].DataNode, dataRead),
+                            axios.post(metadata[1].DataNode, dataRead),
+                            axios.post(metadata[2].DataNode, dataRead),
+                        ])
+                        .then(res=>{
+                            var datas='' 
+                            res.forEach((element, index)=>{
+                                var data = element.data[0].File.data
+                                var uint8Array = new Uint8Array(data)
+                                var textDecoder = new TextDecoder('utf-8');
+                                var stringValue = textDecoder.decode(uint8Array);
+                                datas = datas + stringValue
+                            })
+                            console.log(datas)
+                            imageElement.setAttribute("src", datas);
+                            dataimage = datas
+                            // var reader = new window.FileReader();
+                            // reader.readAsDataURL(res[0].data[0].File); 
+                            // reader.onload = function() {
+                            //     var imageDataUrl = reader.result;
+                            //     
+
+                            // }
+                          })
+                        .catch((err) => console.log(err))
+                }
+        })
+    })
+
+
+
+
+    async function downloadImage(imageSrc,nameOfDownload = 'my-image.png',) {
+            const response = await fetch(imageSrc);
+
+            const blobImage = await response.blob();
+
+            const href = URL.createObjectURL(blobImage);
+
+            const anchorElement = document.createElement('a');
+            anchorElement.href = href;
+            anchorElement.download = nameOfDownload;
+
+            document.body.appendChild(anchorElement);
+            anchorElement.click();
+
+            document.body.removeChild(anchorElement);
+            window.URL.revokeObjectURL(href);
+}
+
+const btn = document.getElementById('btn');
+
+btn.addEventListener('click', () => {
+  downloadImage(
+    dataimage,
+    'my-image.png',
+  )
+    .then(() => {
+      console.log('The image has been downloaded');
+      console.log(dataimage);
+      
+    })
+    .catch(err => {
+      console.log('Error downloading image: ', err);
+    });
+});
+        
+</script>
+</html>
