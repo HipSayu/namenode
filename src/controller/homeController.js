@@ -71,13 +71,14 @@ const Requireheartbeat = () => {
 
 
 const hanldeCheckRequest = async (req, res) => {
+    const Replication = 2;
     const mb150 = 150000000
     const mb200 = 200000000
     const Clients = req.body;
     // const directory =path.join(__dirname,'NamenodeTest' )
     // fs.writeFileSync(directory+"/test.png",Clients.file);
     const Request = Clients.Request;
-    console.log(Clients)
+    console.log('Clients', Clients)
     if (Request == 'Write') {
         var NumberChunk
         var sizeFile = Clients.sizeFile
@@ -91,18 +92,45 @@ const hanldeCheckRequest = async (req, res) => {
             NumberChunk = 5
         }
 
-        await nameNode.find({NameNodeID :"HipdzVao"}).then(async (data, err) => {
-            console.log('check NameNode',data)
-            var metaDatas = [];
-            data = data[0];
-            data = data.DataNode;
+        await ManagerDataNode.find({}).then(async (data, err) => {
+            let DataNodeAlive = [];
+            let DatanodeWrite = []
+            let DatanodeReplication1 = []
+            let DatanodeReplication2 = []
+            let metaDatas = []
             
-            for (let i = 0; i < 3; i += 1) {
+
+            data = data[0];
+            // console.log('check NameNode',data)
+            for (let i=1; i<5;i++ ){
+                if (data[`dataNode${i}`].Alive == 'Yes'){
+                    DataNodeAlive.push(data[`dataNode${i}`])
+                }
+            }
+        //    console.log('DataNode', DataNodeAlive)
+           //random
+
+            for (let i=0; i<NumberChunk;i++ ){
+                var randomIndex = Math.floor(Math.random() * DataNodeAlive.length);
+                var randomIndex1 = Math.floor(Math.random() * DataNodeAlive.length);
+                var randomIndex2 = Math.floor(Math.random() * DataNodeAlive.length);
+                DatanodeWrite.push(DataNodeAlive[randomIndex])
+                DatanodeReplication1.push(DataNodeAlive[randomIndex1])
+                DatanodeReplication2.push(DataNodeAlive[randomIndex2])
+            }
+            // console.log('DatanodeWrite', DatanodeWrite)
+            // console.log('DatanodeReplication1', DatanodeReplication1)
+            // console.log('DatanodeReplication2', DatanodeReplication2)
+            
+
+            for (let i = 1; i <= NumberChunk; i += 1) {
                 metaDatas.push({
                     nameFile: Clients.name,
                     desc: Clients.description,
                     indexFile: i,
-                    DataNode: data[`DataNode${i + 1}`],
+                    DataNode:DatanodeWrite[i-1].address,
+                    DatanodeReplication1:DatanodeReplication1[i-1].address,
+                    DatanodeReplication2:DatanodeReplication1[i-1].address,
                 });
             }
             console.log('check Meta', metaDatas);
@@ -111,11 +139,10 @@ const hanldeCheckRequest = async (req, res) => {
                         .then(console.log('Write Succesfully'));
 
             res.send({
-                    AddressDataNode: metaDatas,
+                    metaDatas: metaDatas,
                     NumberChunk: NumberChunk,
                     request : 'write'
             })
-            
         });
     }
     // if (Request == 'Write') {

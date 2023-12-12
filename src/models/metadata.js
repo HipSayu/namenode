@@ -7,6 +7,8 @@ const metaData = new Schema({
     desc: { type: String, maxLength: 255 },
     indexFile: { type: Number },
     DataNode: { type: String },
+    DatanodeReplication1: { type: String },
+    DatanodeReplication2: { type: String },
 });
 
 module.exports = mongoose.model('metaData', metaData);
