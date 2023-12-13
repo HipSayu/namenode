@@ -93,6 +93,7 @@
                 // console.log('data', res.data)
                 let numberChunk = res.data.NumberChunk
                 let metaDatas = res.data.metaDatas
+                // console.log(metaDatas)
                 let Files = SplitFile(uploadFile, numberChunk)
                 // console.log('dataNode', metaDatas[0].DataNode )
                 // let test = {...metaDatas[0],request : 'write' }
@@ -144,29 +145,30 @@
                     console.log('No co file')
                 }
                 else{
+                    console.log(res)
                     var metadata = res.data.metadata
+
                     let dataRead = {
-                        name :metadata[0].nameFile,
-
-
-
+                        nameFile :metadata[0].nameFile,
                         request:'read'
                     }
                     Promise.all([
-                            axios.post(metadata[0].DataNode, dataRead),
-                            axios.post(metadata[1].DataNode, dataRead),
-                            axios.post(metadata[2].DataNode, dataRead),
+                            axios.post(metadata[0].DataNode, {...dataRead, indexFile : metadata[0].indexFile}),
+                            axios.post(metadata[1].DataNode,  {...dataRead, indexFile : metadata[1].indexFile}),
+                            axios.post(metadata[2].DataNode,  {...dataRead, indexFile : metadata[2].indexFile})
                         ])
                         .then(res=>{
+                            console.log(res)
                             var datas='' 
                             res.forEach((element, index)=>{
-                                var data = element.data[0].File.data
+                                var data = element.data.File.data
                                 var uint8Array = new Uint8Array(data)
                                 var textDecoder = new TextDecoder('utf-8');
                                 var stringValue = textDecoder.decode(uint8Array);
                                 datas = datas + stringValue
                             })
-                            console.log(datas)
+
+                            // console.log(datas)
                             imageElement.setAttribute("src", datas);
                             dataimage = datas
                             // var reader = new window.FileReader();
@@ -181,7 +183,6 @@
                 }
         })
     })
-
 
 
 

@@ -70,6 +70,8 @@ const Requireheartbeat = () => {
 
 
 
+
+
 const hanldeCheckRequest = async (req, res) => {
     const Replication = 2;
     const mb150 = 150000000
@@ -139,9 +141,8 @@ const hanldeCheckRequest = async (req, res) => {
                         .then(console.log('Write Succesfully'));
 
             res.send({
-                    data: metaDatas,
+                    metaDatas: metaDatas,
                     NumberChunk: NumberChunk,
-                    request : 'write'
             })
         });
     }
@@ -191,6 +192,7 @@ const hanldeCheckRequest = async (req, res) => {
     //     });
     // }
     else {
+       
         const name = Clients.name
         await metaData.find({nameFile : name})
         .then(async (data, err) =>{
@@ -198,9 +200,51 @@ const hanldeCheckRequest = async (req, res) => {
                 res.send('Not in DB')
            }
            else{
+                let metaDatas = [];
+                await ManagerDataNode.find({}).then(async (ManagerDataNode, err) => {
+                    let DataNodeAlive = [];
+                    ManagerDataNode = ManagerDataNode[0];
+                    // console.log('check NameNode',data)
+                    for (let i=1; i<5;i++ ){
+                        if (ManagerDataNode[`dataNode${i}`].Alive == 'Yes'){
+                            DataNodeAlive.push(ManagerDataNode[`dataNode${i}`].address)
+                        }
+                    }
+                    console.log('DataNodeAlive', DataNodeAlive)
+                    data.forEach((element, index) => {
+                        if (DataNodeAlive.includes(element.DataNode)){
+                            metaDatas.push({
+                              nameFile: element.nameFile,
+                              desc: element.desc,
+                              indexFile: element.indexFile,
+                              DataNode : element.DataNode
+                            })
+                            return
+                        }
+                        else if (DataNodeAlive.includes(element. DatanodeReplication1)){
+                            metaDatas.push({
+                              nameFile: element.nameFile,
+                              desc: element.desc,
+                              indexFile: element.indexFile,
+                              DataNode : element. DatanodeReplication1
+                            })
+                            return
+                        }
+                        else if (DataNodeAlive.includes(element. DatanodeReplication2)){
+                            metaDatas.push({
+                              nameFile: element.nameFile,
+                              desc: element.desc,
+                              indexFile: element.indexFile,
+                              DataNode : element. DatanodeReplication2
+                            })
+                            return
+                        }
+                    });
+                    console.log('data', metaDatas)
+                    
+                })
                 res.send({
-                    metadata:data,
-                    request : 'read'
+                    metadata:metaDatas,
                 })
            }
            console.log('send to Client Complete')
