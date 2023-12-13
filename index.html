@@ -107,25 +107,6 @@
                 .then(res=>{console.log(res)  })
                 .catch((err) => console.log(err))
 
-
-
-                // Files.forEach((element, index) => {
-                //     datas.push({
-                //         name : element.nameFile,
-                //         index : element.indexFile,
-                //         desc : element.desc,
-                //         file : filesupload[index],
-                //         request : 'write'
-                //     })
-                // });
-                // Promise.all([
-                //     axios.post(Files[0].DataNode, datas[0]),
-                //     axios.post(Files[1].DataNode, datas[1]),
-                //     axios.post(Files[2].DataNode, datas[2])
-                // ])
-                // .then(res=>{console.log(res)  })
-                // .catch((err) => console.log(err))
-           
             })  
     })
 
@@ -171,13 +152,7 @@
                             // console.log(datas)
                             imageElement.setAttribute("src", datas);
                             dataimage = datas
-                            // var reader = new window.FileReader();
-                            // reader.readAsDataURL(res[0].data[0].File); 
-                            // reader.onload = function() {
-                            //     var imageDataUrl = reader.result;
-                            //     
-
-                            // }
+                           
                           })
                         .catch((err) => console.log(err))
                 }
