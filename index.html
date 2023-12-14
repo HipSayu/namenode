@@ -142,11 +142,12 @@
                             console.log(res)
                             var datas='' 
                             res.forEach((element, index)=>{
-                                var data = element.data.File.data
-                                var uint8Array = new Uint8Array(data)
-                                var textDecoder = new TextDecoder('utf-8');
-                                var stringValue = textDecoder.decode(uint8Array);
-                                datas = datas + stringValue
+                                var data = element.data.File
+                                // console.log('>>Check data',data)
+                                // var uint8Array = new Uint8Array(data)
+                                // var textDecoder = new TextDecoder('utf-8');
+                                // var stringValue = textDecoder.decode(uint8Array);
+                                datas = datas + data
                             })
 
                             // console.log(datas)

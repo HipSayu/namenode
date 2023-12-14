@@ -23,8 +23,6 @@ const hanldeCheckRequest = async (req, res) => {
     const mb150 = 150000000
     const mb200 = 200000000
     const Clients = req.body;
-    // const directory =path.join(__dirname,'NamenodeTest' )
-    // fs.writeFileSync(directory+"/test.png",Clients.file);
     const Request = Clients.Request;
     console.log('Clients', Clients)
     if (Request == 'Write') {
