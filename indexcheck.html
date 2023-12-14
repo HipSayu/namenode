@@ -22,21 +22,57 @@
         <form id="form_Read">
             <label for="name">Name File</label>
             <input type="text" name="name" id="" required>
-            <button>Read</button>
+            <button>download</button>
         </form>
-        <button id="btn">Download image</button>
-        <img id="imageElement" src="" alt=""> 
+        
         
 
     </div>
 </body>
 
 <script >
+
     let uploadFile 
     let SizeFileUpload
     let typeFile
     let dataimage = ''
+    let nameFileRead
 
+    // function base64toBlob(base64String, mimeType) {
+    //     // Split the base64 string to get the data and mime type
+    //     const parts = base64String.split(';base64,');
+    //     const contentType = parts[0].replace('data:', '') || mimeType;
+    //     const raw = window.atob(parts[1]);
+    //     const rawLength = raw.length;
+    //     const uInt8Array = new Uint8Array(rawLength);
+
+    //     // Convert the binary data to Uint8Array
+    //     for (let i = 0; i < rawLength; ++i) {
+    //         uInt8Array[i] = raw.charCodeAt(i);
+    //     }
+
+    //     // Create a Blob from the Uint8Array
+    //     return new Blob([uInt8Array], { type: contentType });
+    // }
+
+    function downloadBlob(blob, fileName) {
+        // Create a temporary link element
+        const link = document.createElement('a');
+
+        // Set the download attribute and create a data URL for the Blob
+        link.download = fileName;
+        link.href = URL.createObjectURL(blob);
+
+        // Append the link to the document, trigger a click, and remove the link
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Revoke the Object URL to free up resources
+        URL.revokeObjectURL(link.href);
+    }
+
+    //Split file
   function SplitFile(file, numberChunk) {
         const Files = [];
         const sizeFile = file.length
@@ -62,7 +98,7 @@
             // console.log(Files)
         return Files;
   }
-
+  //Upload
     function handleFileUpload() {
         const fileInput = document.getElementById('image');
         if (fileInput.files.length > 0) {
@@ -78,7 +114,7 @@
         }
     }
     
-
+    //SENN namenode
     let form = document.getElementById('form')
     form.addEventListener('submit', async (e)=>{
         e.preventDefault()
@@ -87,7 +123,7 @@
         formData.append("sizeFile", SizeFileUpload)
 
         let data =Object.fromEntries(formData)
-        
+
         await axios.post('http://localhost:1611/clientRequest',data)
             .then((res)=> {
                 // console.log(res)
@@ -113,7 +149,7 @@
 
 
 
-
+    //Read DataNode
     let imageElement = document.getElementById('imageElement')
     let form_Read = document.getElementById('form_Read')
     form_Read.addEventListener('submit', async (e)=>{
@@ -129,7 +165,6 @@
                 else{
                     console.log(res)
                     var metadata = res.data.metadata
-
                     let dataRead = {
                         nameFile :metadata[0].nameFile,
                         request:'read'
@@ -139,17 +174,29 @@
                             axios.post(metadata[1].DataNode,  {...dataRead, indexFile : metadata[1].indexFile}),
                             axios.post(metadata[2].DataNode,  {...dataRead, indexFile : metadata[2].indexFile})
                         ])
-                        .then(res=>{
+                        .then(async res=>{
                             console.log(res)
                             var datas='' 
+                            nameFileRead = res[0].data.nameFile,
                             res.forEach((element, index)=>{
                                 var data = element.data.File
                                 datas = datas + data
                             })
 
                             // console.log(datas)
-                            imageElement.setAttribute("src", datas);
+                            var parts = datas.split(';');
+                            var typedata = parts[0].split(':');
+                            typeFile =typedata[1]
+                            console.log('check type ',typeFile)
+                            var rar = typeFile.split('/')
+                            var nameFiledonwlaod = nameFileRead +'.'+ rar[1]
+
+                            const base64Response = await fetch(datas)
+                            const blob = await base64Response.blob();
+                            console.log(blob)
                             dataimage = datas
+                            
+                            downloadBlob(blob, nameFiledonwlaod);
                            
                           })
                         .catch((err) => console.log(err))
@@ -158,41 +205,36 @@
     })
 
 
+    //Donwload
+//     async function downloadImage(imageSrc, nameOfDownload = 'my-image.png',) {
+//             const response = await fetch(imageSrc);
 
-    async function downloadImage(imageSrc, nameOfDownload = 'my-image.png',) {
-            const response = await fetch(imageSrc);
+//             const blobImage = await response.blob();
 
-            const blobImage = await response.blob();
+//             const href = URL.createObjectURL(blobImage);
 
-            const href = URL.createObjectURL(blobImage);
+//             const anchorElement = document.createElement('a');
+//             anchorElement.href = href;
+//             anchorElement.download = nameOfDownload;
 
-            const anchorElement = document.createElement('a');
-            anchorElement.href = href;
-            anchorElement.download = nameOfDownload;
+//             document.body.appendChild(anchorElement);
+//             anchorElement.click();
 
-            document.body.appendChild(anchorElement);
-            anchorElement.click();
+//             document.body.removeChild(anchorElement);
+//             window.URL.revokeObjectURL(href);
+// }
 
-            document.body.removeChild(anchorElement);
-            window.URL.revokeObjectURL(href);
-}
+// const btn = document.getElementById('btn');
 
-const btn = document.getElementById('btn');
-
-btn.addEventListener('click', () => {
-  downloadImage(
-    dataimage,
-    'my-image.png',
-  )
-    .then(() => {
-      console.log('The image has been downloaded');
-      console.log(dataimage);
-      
-    })
-    .catch(err => {
-      console.log('Error downloading image: ', err);
-    });
-});
+// btn.addEventListener('click', () => {
+//   downloadImage(dataimage,'my-image.png',)
+//     .then(() => {
+//       console.log('The image has been downloaded');
+//     })
+//     .catch(err => {
+//       console.log('Error downloading image: ', err);
+//     });
+// });
         
 </script>
 </html>
