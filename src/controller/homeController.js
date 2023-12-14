@@ -26,17 +26,19 @@ const hanldeCheckRequest = async (req, res) => {
     const Request = Clients.Request;
     console.log('Clients', Clients)
     if (Request == 'Write') {
-        var NumberChunk
+        var NumberChunk = 3
         var sizeFile = Clients.sizeFile
-        if (sizeFile <mb150){
-            NumberChunk = 3
-        }
-        else if (sizeFile>mb150 && sizeFile<=mb200){
-            NumberChunk = 4
-        }
-        else {
-            NumberChunk = 5
-        }
+        // if (sizeFile <mb150){
+        //     NumberChunk = 3
+        // }
+        // else {
+        //     NumberChunk = 4
+        // }
+            
+        
+        // // else {
+        // //     NumberChunk = 5
+        // // }
 
         await ManagerDataNode.find({}).then(async (data, err) => {
             let DataNodeAlive = [];
@@ -86,6 +88,7 @@ const hanldeCheckRequest = async (req, res) => {
                     nameFile: Clients.name,
                     desc: Clients.description,
                     indexFile: i,
+                    NumberChunk : NumberChunk,
                     DataNode:DatanodeWrite[i-1].address,
                     DatanodeReplication1:DatanodeReplication1[i-1].address,
                     DatanodeReplication2:DatanodeReplication2[i-1].address,
@@ -128,6 +131,7 @@ const hanldeCheckRequest = async (req, res) => {
                             metaDatas.push({
                               nameFile: element.nameFile,
                               desc: element.desc,
+                              NumberChunk : element.NumberChunk,
                               indexFile: element.indexFile,
                               DataNode : element.DataNode
                             })
@@ -138,6 +142,7 @@ const hanldeCheckRequest = async (req, res) => {
                               nameFile: element.nameFile,
                               desc: element.desc,
                               indexFile: element.indexFile,
+                              NumberChunk : element.NumberChunk,
                               DataNode : element. DatanodeReplication1
                             })
                             return
@@ -147,6 +152,7 @@ const hanldeCheckRequest = async (req, res) => {
                               nameFile: element.nameFile,
                               desc: element.desc,
                               indexFile: element.indexFile,
+                              NumberChunk : element.NumberChunk,
                               DataNode : element. DatanodeReplication2
                             })
                             return

@@ -37,23 +37,7 @@
     let typeFile
     let dataimage = ''
     let nameFileRead
-
-    // function base64toBlob(base64String, mimeType) {
-    //     // Split the base64 string to get the data and mime type
-    //     const parts = base64String.split(';base64,');
-    //     const contentType = parts[0].replace('data:', '') || mimeType;
-    //     const raw = window.atob(parts[1]);
-    //     const rawLength = raw.length;
-    //     const uInt8Array = new Uint8Array(rawLength);
-
-    //     // Convert the binary data to Uint8Array
-    //     for (let i = 0; i < rawLength; ++i) {
-    //         uInt8Array[i] = raw.charCodeAt(i);
-    //     }
-
-    //     // Create a Blob from the Uint8Array
-    //     return new Blob([uInt8Array], { type: contentType });
-    // }
+    let chunkNumbers
 
     function downloadBlob(blob, fileName) {
         // Create a temporary link element
@@ -129,20 +113,44 @@
                 // console.log(res)
                 // console.log('data', res.data)
                 let numberChunk = res.data.NumberChunk
+                chunkNumbers =  res.data.NumberChunk
+                console.log(">>check Chunk ",chunkNumbers)
                 let metaDatas = res.data.metaDatas
                 // console.log(metaDatas)
                 let Files = SplitFile(uploadFile, numberChunk)
                 // console.log('dataNode', metaDatas[0].DataNode )
                 // let test = {...metaDatas[0],request : 'write' }
                 // console.log('test', test)
-               
-                Promise.all([
-                    axios.post(metaDatas[0].DataNode, {...metaDatas[0],request : 'write' ,File: Files[0]}),
-                    axios.post(metaDatas[1].DataNode, {...metaDatas[1],request : 'write' ,File: Files[1]}),
-                    axios.post(metaDatas[2].DataNode, {...metaDatas[2],request : 'write' ,File: Files[2]})
-                ])
-                .then(res=>{console.log(res)  })
-                .catch((err) => console.log(err))
+                if (chunkNumbers == 3){
+                    Promise.all([
+                        axios.post(metaDatas[0].DataNode, {...metaDatas[0],request : 'write' ,File: Files[0], NumberChunk:3}),
+                        axios.post(metaDatas[1].DataNode, {...metaDatas[1],request : 'write' ,File: Files[1], NumberChunk:3}),
+                        axios.post(metaDatas[2].DataNode, {...metaDatas[2],request : 'write' ,File: Files[2], NumberChunk:3})
+                    ])
+                    .then(res=>{console.log(res)  })
+                    .catch((err) => console.log(err))
+                }
+                else if (chunkNumbers == 4){
+                    Promise.all([
+                        axios.post(metaDatas[0].DataNode, {...metaDatas[0],request : 'write' ,File: Files[0], NumberChunk:4}),
+                        axios.post(metaDatas[1].DataNode, {...metaDatas[1],request : 'write' ,File: Files[1], NumberChunk:4}),
+                        axios.post(metaDatas[2].DataNode, {...metaDatas[2],request : 'write' ,File: Files[2], NumberChunk:4}),
+                        axios.post(metaDatas[3].DataNode, {...metaDatas[3],request : 'write' ,File: Files[3], NumberChunk:4}),
+                    ])
+                    .then(res=>{console.log(res)  })
+                    .catch((err) => console.log(err))
+                }
+                else{
+                    Promise.all([
+                        axios.post(metaDatas[0].DataNode, {...metaDatas[0],request : 'write' ,File: Files[0], NumberChunk:5}),
+                        axios.post(metaDatas[1].DataNode, {...metaDatas[1],request : 'write' ,File: Files[1], NumberChunk:5}),
+                        axios.post(metaDatas[2].DataNode, {...metaDatas[2],request : 'write' ,File: Files[2], NumberChunk:5}),
+                        axios.post(metaDatas[3].DataNode, {...metaDatas[3],request : 'write' ,File: Files[3], NumberChunk:5}),
+                        axios.post(metaDatas[4].DataNode, {...metaDatas[4],request : 'write' ,File: Files[4], NumberChunk:5}),
+                    ])
+                    .then(res=>{console.log(res)  })
+                    .catch((err) => console.log(err))
+                }
 
             })  
     })
@@ -163,78 +171,121 @@
                     console.log('No co file')
                 }
                 else{
-                    console.log(res)
+                    console.log('>>CheckNAMENODE',res)
                     var metadata = res.data.metadata
+                    chunkNumbers = metadata[0].NumberChunk
                     let dataRead = {
                         nameFile :metadata[0].nameFile,
                         request:'read'
                     }
-                    Promise.all([
-                            axios.post(metadata[0].DataNode, {...dataRead, indexFile : metadata[0].indexFile}),
-                            axios.post(metadata[1].DataNode,  {...dataRead, indexFile : metadata[1].indexFile}),
-                            axios.post(metadata[2].DataNode,  {...dataRead, indexFile : metadata[2].indexFile})
-                        ])
-                        .then(async res=>{
-                            console.log(res)
-                            var datas='' 
-                            nameFileRead = res[0].data.nameFile,
-                            res.forEach((element, index)=>{
-                                var data = element.data.File
-                                datas = datas + data
-                            })
+                    if(chunkNumbers == 3){
+                        Promise.all([
+                                axios.post(metadata[0].DataNode, {...dataRead, indexFile : metadata[0].indexFile}),
+                                axios.post(metadata[1].DataNode,  {...dataRead, indexFile : metadata[1].indexFile}),
+                                axios.post(metadata[2].DataNode,  {...dataRead, indexFile : metadata[2].indexFile})
+                            ])
+                            .then(async res=>{
+                                console.log(res)
+                                var datas='' 
+                                nameFileRead = res[0].data.nameFile,
+                                res.forEach((element, index)=>{
+                                    var data = element.data.File
+                                    datas = datas + data
+                                })
+    
+                                // console.log(datas)
+                                var parts = datas.split(';');
+                                var typedata = parts[0].split(':');
+                                typeFile =typedata[1]
+                                console.log('check type ',typeFile)
+                                var rar = typeFile.split('/')
+                                var nameFiledonwlaod = nameFileRead +'.'+ rar[1]
+    
+                                const base64Response = await fetch(datas)
+                                const blob = await base64Response.blob();
+                                console.log(blob)
+                                dataimage = datas
+                                
+                                downloadBlob(blob, nameFiledonwlaod);
+                               
+                              })
+                            .catch((err) => console.log(err))
 
-                            // console.log(datas)
-                            var parts = datas.split(';');
-                            var typedata = parts[0].split(':');
-                            typeFile =typedata[1]
-                            console.log('check type ',typeFile)
-                            var rar = typeFile.split('/')
-                            var nameFiledonwlaod = nameFileRead +'.'+ rar[1]
-
-                            const base64Response = await fetch(datas)
-                            const blob = await base64Response.blob();
-                            console.log(blob)
-                            dataimage = datas
-                            
-                            downloadBlob(blob, nameFiledonwlaod);
-                           
-                          })
-                        .catch((err) => console.log(err))
+                    }
+                    else if (chunkNumbers ==4){
+                        Promise.all([
+                                axios.post(metadata[0].DataNode, {...dataRead, indexFile : metadata[0].indexFile}),
+                                axios.post(metadata[1].DataNode,  {...dataRead, indexFile : metadata[1].indexFile}),
+                                axios.post(metadata[2].DataNode,  {...dataRead, indexFile : metadata[2].indexFile}),
+                                axios.post(metadata[3].DataNode,  {...dataRead, indexFile : metadata[3].indexFile}),
+                            ])
+                            .then(async res=>{
+                                console.log('>>>checkk Read',res)
+                                var datas='' 
+                                nameFileRead = res[0].data.nameFile,
+                                res.forEach((element, index)=>{
+                                    console.log(index)
+                                    var data = element.data.File
+                                    datas = datas + data
+                                })
+    
+                                // console.log(datas)
+                                var parts = datas.split(';');
+                                var typedata = parts[0].split(':');
+                                typeFile =typedata[1]
+                                console.log('check type ',typeFile)
+                                var rar = typeFile.split('/')
+                                var nameFiledonwlaod = nameFileRead +'.'+ rar[1]
+    
+                                const base64Response = await fetch(datas)
+                                const blob = await base64Response.blob();
+                                console.log(blob)
+                                dataimage = datas
+                                
+                                downloadBlob(blob, nameFiledonwlaod);
+                               
+                              })
+                            .catch((err) => console.log(err))
+                    }
+                    else {
+                        Promise.all([
+                                axios.post(metadata[0].DataNode, {...dataRead, indexFile : metadata[0].indexFile}),
+                                axios.post(metadata[1].DataNode,  {...dataRead, indexFile : metadata[1].indexFile}),
+                                axios.post(metadata[2].DataNode,  {...dataRead, indexFile : metadata[2].indexFile}),
+                                axios.post(metadata[3].DataNode,  {...dataRead, indexFile : metadata[3].indexFile}),
+                                axios.post(metadata[4].DataNode,  {...dataRead, indexFile : metadata[4].indexFile}),
+                            ])
+                            .then(async res=>{
+                                console.log(res)
+                                var datas='' 
+                                nameFileRead = res[0].data.nameFile,
+                                res.forEach((element, index)=>{
+                                    var data = element.data.File
+                                    datas = datas + data
+                                })
+    
+                                // console.log(datas)
+                                var parts = datas.split(';');
+                                var typedata = parts[0].split(':');
+                                typeFile =typedata[1]
+                                console.log('check type ',typeFile)
+                                var rar = typeFile.split('/')
+                                var nameFiledonwlaod = nameFileRead +'.'+ rar[1]
+    
+                                const base64Response = await fetch(datas)
+                                const blob = await base64Response.blob();
+                                console.log(blob)
+                                dataimage = datas
+                                
+                                downloadBlob(blob, nameFiledonwlaod);
+                               
+                              })
+                            .catch((err) => console.log(err))
+                    }
                 }
         })
     })
 
-
-    //Donwload
-//     async function downloadImage(imageSrc, nameOfDownload = 'my-image.png',) {
-//             const response = await fetch(imageSrc);
-
-//             const blobImage = await response.blob();
-
-//             const href = URL.createObjectURL(blobImage);
-
-//             const anchorElement = document.createElement('a');
-//             anchorElement.href = href;
-//             anchorElement.download = nameOfDownload;
-
-//             document.body.appendChild(anchorElement);
-//             anchorElement.click();
-
-//             document.body.removeChild(anchorElement);
-//             window.URL.revokeObjectURL(href);
-// }
-
-// const btn = document.getElementById('btn');
-
-// btn.addEventListener('click', () => {
-//   downloadImage(dataimage,'my-image.png',)
-//     .then(() => {
-//       console.log('The image has been downloaded');
-//     })
-//     .catch(err => {
-//       console.log('Error downloading image: ', err);
-//     });
-// });
         
 </script>
 </html>

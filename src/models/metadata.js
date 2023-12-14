@@ -6,6 +6,7 @@ const metaData = new Schema({
     nameFile: { type: String, maxLength: 255 },
     desc: { type: String, maxLength: 255 },
     indexFile: { type: Number },
+    NumberChunk : { type: Number }, 
     DataNode: { type: String },
     DatanodeReplication1: { type: String },
     DatanodeReplication2: { type: String },
